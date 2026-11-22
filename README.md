@@ -163,6 +163,29 @@ The radio enumerates as USB Full Speed VID `0x2166` / PID `0x9030` ("TM_D750"),
 a composite device with a CDC-ACM serial port (interfaces 0 and 1) and USB
 Audio (ignored).
 
+### Status LED
+
+The DevKitC's addressable RGB LED shows what the adapter is doing:
+
+| LED | Meaning |
+| --- | --- |
+| off | no app connected |
+| red → green → blue, once | power-on self-test |
+| blue (dim) | an app is connected, idle |
+| green flash | a packet arrived from the radio |
+| red | a packet was sent to the radio for transmission |
+
+Red is an estimate. KISS gives no "transmission done" signal, so the adapter
+lights red for the app's TXDELAY plus the packet's airtime at the TNC's speed
+(1200 or 9600 baud). On a busy channel the radio may key up later than that.
+
+Build options (menuconfig → QRV Link):
+- `CONFIG_QRV_LINK_STATUS_LED` turns the LED on or off (on by default).
+- `CONFIG_QRV_LINK_STATUS_LED_GPIO` sets the LED pin: GPIO48 on DevKitC-1
+  v1.0 boards (the default), GPIO38 on v1.1 boards.
+- `CONFIG_QRV_LINK_STATUS_LED_BRIGHTNESS` sets the brightness, 1–255
+  (default 16, since these LEDs are very bright).
+
 ### DTR handshake
 
 The radio only reads and answers its USB serial port while the host holds

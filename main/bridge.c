@@ -28,6 +28,7 @@
 #include "freertos/timers.h"
 #include "nvs.h"
 #include "radio_usb.h"
+#include "status_led.h"
 #include "sdkconfig.h"
 
 static const char *TAG = "bridge";
@@ -171,6 +172,41 @@ static void post(bridge_event_t type)
 static SemaphoreHandle_t s_to_app_lock;
 static bool s_radio_mid_frame;
 
+/* For the status LED: radio -> app frame tracking (USB task only), and what the
+ * TX-time estimate needs. */
+static size_t s_rx_frame_len;      /* bytes since the last FEND */
+static bool s_rx_frame_is_data;    /* first byte of the current frame was a data command */
+static volatile uint32_t s_txdelay_ms = 300; /* from the app's KISS TXDELAY, if it sends one */
+static volatile uint32_t s_tnc_baud = 1200;  /* from CAT AS, read whenever KISS is switched on */
+
+/* Flash green for each complete data frame the radio delivers. */
+static void led_track_rx(const uint8_t *data, size_t len)
+{
+    for (size_t i = 0; i < len; i++) {
+        if (data[i] == KISS_FEND) {
+            if (s_rx_frame_len > 0 && s_rx_frame_is_data) {
+                status_led_rx();
+            }
+            s_rx_frame_len = 0;
+        } else {
+            if (s_rx_frame_len == 0) {
+                s_rx_frame_is_data = (data[i] & 0x0F) == 0x00;
+            }
+            s_rx_frame_len++;
+        }
+    }
+}
+
+/* Rough time the radio needs to send a KISS data frame of `frame_len` bytes
+ * (FEND to FEND): TXDELAY plus the AX.25 frame at the TNC's speed, allowing
+ * for flags, FCS and bit stuffing. KISS gives no "transmission done" signal. */
+static uint32_t estimate_tx_ms(size_t frame_len)
+{
+    const uint32_t payload = frame_len > 3 ? frame_len - 3 : 0; /* minus FENDs and command */
+    const uint32_t bits = (payload + 4) * 8 * 11 / 10;             /* + flags/FCS, ~10% stuffing */
+    return s_txdelay_ms + bits * 1000 / s_tnc_baud + 50;
+}
+
 static void on_radio_rx(const uint8_t *data, size_t len, void *ctx)
 {
     (void)ctx;
@@ -181,6 +217,7 @@ static void on_radio_rx(const uint8_t *data, size_t len, void *ctx)
             s_radio_mid_frame = data[len - 1] != 0xC0;
         }
         xSemaphoreGive(s_to_app_lock);
+        led_track_rx(data, len);
         if (sent < len) {
             s_dropped_to_app += len - sent;
         }
@@ -211,6 +248,7 @@ static void on_app_rx(const uint8_t *data, size_t len, void *ctx)
 static void on_app_session(bool active, void *ctx)
 {
     (void)ctx;
+    status_led_set_connected(active);
     post(active ? EV_SESSION_OPEN : EV_SESSION_CLOSE);
 }
 
@@ -326,6 +364,7 @@ static bool parse_tn(const char *reply, char *mode, char *band)
 static void set_kiss_active(bool active)
 {
     s_radio_mid_frame = false;
+    s_rx_frame_len = 0;
     s_kiss_active = active;
     if (active) {
         xEventGroupSetBits(s_flags, BIT_KISS_ACTIVE);
@@ -470,6 +509,10 @@ static bool enter_kiss(void)
 {
     if (!capture_orig_tn()) {
         return false;
+    }
+    char as[CAT_LINE_MAX];
+    if (cat_query("AS", as, sizeof(as)) == ESP_OK && strncmp(as, "AS ", 3) == 0) {
+        s_tnc_baud = as[3] == '1' ? 9600 : 1200; /* for the status LED's TX estimate */
     }
     char mode, band;
     if (!parse_tn(s_orig_tn, &mode, &band)) {
@@ -816,18 +859,20 @@ static void control_task(void *arg)
 }
 
 /* Writes app bytes to the radio once KISS is up. app_tx task only. */
-static void forward_to_radio(const uint8_t *data, size_t len)
+static bool forward_to_radio(const uint8_t *data, size_t len)
 {
     EventBits_t bits = xEventGroupWaitBits(s_flags, BIT_KISS_ACTIVE, pdFALSE, pdFALSE,
                                            pdMS_TO_TICKS(APP_TX_WAIT_MS));
     if (!(bits & BIT_KISS_ACTIVE)) {
         ESP_LOGW(TAG, "KISS not active; dropped %u bytes from app", (unsigned)len);
-        return;
+        return false;
     }
     esp_err_t err = radio_usb_write(data, len, 2000);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "write to radio failed: %s", esp_err_to_name(err));
+        return false;
     }
+    return true;
 }
 
 /*
@@ -943,6 +988,9 @@ static void dispatch_frame(const uint8_t *f, size_t n)
         return;
     }
     const uint8_t type = cmd & 0x0F;
+    if (type == 0x01 && n >= 4) {
+        s_txdelay_ms = (uint32_t)f[2] * 10; /* KISS TXDELAY is in 10 ms units */
+    }
     if (type >= 1 && type <= 5 && n <= KISS_PARAM_MAXLEN) {
         /* Channel-access parameter: keep it if KISS isn't up yet. */
         xSemaphoreTake(s_param_lock, portMAX_DELAY);
@@ -956,7 +1004,9 @@ static void dispatch_frame(const uint8_t *f, size_t n)
     } else if (!s_kiss_active) {
         post_arg(EV_KISS_NEEDED, 1); /* data needs the TNC; bring KISS up now */
     }
-    forward_to_radio(f, n);
+    if (forward_to_radio(f, n) && type == 0x00) {
+        status_led_tx(estimate_tx_ms(n));
+    }
 }
 
 /* Reassemble KISS frames from the app's byte stream (frames may span writes). */
@@ -1009,6 +1059,9 @@ esp_err_t bridge_start(const char *ble_name)
                         s_grace_timer,
                         ESP_ERR_NO_MEM, TAG, "no memory");
     ESP_RETURN_ON_ERROR(cat_init(), TAG, "cat_init");
+    if (status_led_start() != ESP_OK) {
+        ESP_LOGW(TAG, "status LED not available; continuing without it");
+    }
 
     BaseType_t ok = xTaskCreate(control_task, "bridge", 4096, NULL, 6, NULL);
     ESP_RETURN_ON_FALSE(ok == pdPASS, ESP_ERR_NO_MEM, TAG, "control task");
