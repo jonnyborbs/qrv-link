@@ -26,4 +26,25 @@ menu "QRV Link"
             A frequency change (SetHardware 0xEA) that arrives first then
             needs no KISS exit. Listen-only apps miss packets during those 3 s.
 
+    config QRV_LINK_STATUS_LED
+        bool "Status LED (on-board addressable RGB LED)"
+        default y
+        help
+            Off when no app is connected, blue when an app is connected,
+            green flash when a packet arrives from the radio, red while a
+            packet is (estimated to be) transmitting.
+
+    config QRV_LINK_STATUS_LED_GPIO
+        int "Status LED GPIO"
+        depends on QRV_LINK_STATUS_LED
+        default 48
+        help
+            ESP32-S3-DevKitC-1 v1.0 boards use GPIO48, v1.1 boards GPIO38.
+
+    config QRV_LINK_STATUS_LED_BRIGHTNESS
+        int "Status LED brightness (1-255)"
+        depends on QRV_LINK_STATUS_LED
+        range 1 255
+        default 16
+
 endmenu
