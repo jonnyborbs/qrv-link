@@ -18,6 +18,7 @@
 #include "freertos/task.h"
 #include "host/ble_hs.h"
 #include "host/util/util.h"
+#include "nimble/nimble_npl.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
@@ -50,6 +51,19 @@ static volatile bool s_subscribed;
 static volatile uint16_t s_mtu = 23;
 
 static void start_advertising(void);
+
+/*
+ * Restarting advertising from the DISCONNECT event can fail with
+ * BLE_HS_ENOMEM: with one connection allowed, NimBLE may not have freed the old
+ * connection yet. If advertising doesn't start, try again shortly, so the
+ * adapter never stays invisible to apps. The retry uses a NimBLE callout so it
+ * runs in the NimBLE host task (a FreeRTOS timer callback's small stack
+ * overflows in ble_gap_adv_start).
+ */
+#define ADV_RETRY_MS 200
+static struct ble_npl_callout s_adv_retry;
+static bool s_adv_retry_ready;
+static bool s_adv_failed; /* the last attempt failed; a retry is pending */
 
 static void set_session(bool active)
 {
@@ -180,8 +194,30 @@ static int gap_event(struct ble_gap_event *event, void *arg)
     return 0;
 }
 
+static void adv_retry_cb(struct ble_npl_event *ev)
+{
+    (void)ev;
+    start_advertising();
+}
+
+/* Schedule another attempt; logs only the first failure of a series. */
+static void adv_failed(const char *what, int rc)
+{
+    if (!s_adv_failed) {
+        ESP_LOGW(TAG, "%s failed (%d); retrying every %d ms", what, rc, ADV_RETRY_MS);
+    }
+    s_adv_failed = true;
+    if (s_adv_retry_ready) {
+        ble_npl_callout_reset(&s_adv_retry, ble_npl_time_ms_to_ticks32(ADV_RETRY_MS));
+    }
+}
+
 static void start_advertising(void)
 {
+    if (s_conn != BLE_HS_CONN_HANDLE_NONE) {
+        s_adv_failed = false; /* an app is connected; advertising resumes when it leaves */
+        return;
+    }
     struct ble_hs_adv_fields fields = { 0 };
     fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
     fields.uuids128 = &s_svc_uuid;
@@ -189,7 +225,7 @@ static void start_advertising(void)
     fields.uuids128_is_complete = 1;
     int rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        ESP_LOGE(TAG, "adv fields: %d", rc);
+        adv_failed("setting advertising data", rc);
         return;
     }
 
@@ -201,7 +237,7 @@ static void start_advertising(void)
     rsp.name_is_complete = 1;
     rc = ble_gap_adv_rsp_set_fields(&rsp);
     if (rc != 0) {
-        ESP_LOGE(TAG, "scan response fields: %d", rc);
+        adv_failed("setting the scan response", rc);
         return;
     }
 
@@ -211,10 +247,11 @@ static void start_advertising(void)
     };
     rc = ble_gap_adv_start(s_own_addr_type, NULL, BLE_HS_FOREVER, &params, gap_event, NULL);
     if (rc != 0 && rc != BLE_HS_EALREADY) {
-        ESP_LOGE(TAG, "adv start: %d", rc);
+        adv_failed("starting advertising", rc);
         return;
     }
-    ESP_LOGI(TAG, "advertising as \"%s\"", name);
+    ESP_LOGI(TAG, "advertising as \"%s\"%s", name, s_adv_failed ? " (after retrying)" : "");
+    s_adv_failed = false;
 }
 
 static void on_sync(void)
@@ -298,6 +335,8 @@ esp_err_t ble_kiss_start(const ble_kiss_config_t *config)
     ESP_RETURN_ON_FALSE(s_notify_buf, ESP_ERR_NO_MEM, TAG, "notify buffer");
 
     ESP_RETURN_ON_ERROR(nimble_port_init(), TAG, "nimble_port_init");
+    ble_npl_callout_init(&s_adv_retry, nimble_port_get_dflt_eventq(), adv_retry_cb, NULL);
+    s_adv_retry_ready = true;
 
     ble_hs_cfg.sync_cb = on_sync;
     ble_hs_cfg.reset_cb = on_reset;
