@@ -184,7 +184,8 @@ Build options (menuconfig → QRV Link):
 - `CONFIG_QRV_LINK_STATUS_LED_GPIO` sets the LED pin: GPIO48 on DevKitC-1
   v1.0 boards (the default), GPIO38 on v1.1 boards.
 - `CONFIG_QRV_LINK_STATUS_LED_BRIGHTNESS` sets the brightness, 1–255
-  (default 16, since these LEDs are very bright).
+  (default 16, since these LEDs are very bright). Blue and red use half the
+  setting and green a quarter, so the three colours look about equally bright.
 
 ### DTR handshake
 

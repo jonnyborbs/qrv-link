@@ -46,5 +46,8 @@ menu "QRV Link"
         depends on QRV_LINK_STATUS_LED
         range 1 255
         default 16
+        help
+            Overall LED brightness. Blue and red use half of this value and
+            green a quarter, so the colours look about equally bright.
 
 endmenu

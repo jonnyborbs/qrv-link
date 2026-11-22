@@ -50,13 +50,19 @@ static const char *const COLOR_NAMES[] = { "off", "blue", "green", "red" };
 
 static esp_err_t show(color_t color)
 {
+    /* Equal drive levels don't look equally bright: the eye is most sensitive
+     * to green, and WS2812 green is the most efficient element. So each colour
+     * gets its own share of the brightness setting, tuned by eye on the
+     * DevKitC so red, green and blue look about equally dim. */
     const uint32_t b = CONFIG_QRV_LINK_STATUS_LED_BRIGHTNESS;
-    const uint32_t idle = b / 2 ? b / 2 : 1; /* the steady idle colour a little dimmer */
+    const uint32_t blue = b / 2 ? b / 2 : 1;
+    const uint32_t red = b / 2 ? b / 2 : 1;
+    const uint32_t green = b / 4 ? b / 4 : 1;
     esp_err_t err = ESP_OK;
     switch (color) {
-    case COLOR_BLUE:  err = led_strip_set_pixel(s_strip, 0, 0, 0, idle); break;
-    case COLOR_GREEN: err = led_strip_set_pixel(s_strip, 0, 0, b, 0); break;
-    case COLOR_RED:   err = led_strip_set_pixel(s_strip, 0, b, 0, 0); break;
+    case COLOR_BLUE:  err = led_strip_set_pixel(s_strip, 0, 0, 0, blue); break;
+    case COLOR_GREEN: err = led_strip_set_pixel(s_strip, 0, 0, green, 0); break;
+    case COLOR_RED:   err = led_strip_set_pixel(s_strip, 0, red, 0, 0); break;
     case COLOR_OFF:   return led_strip_clear(s_strip);
     }
     return err == ESP_OK ? led_strip_refresh(s_strip) : err;
