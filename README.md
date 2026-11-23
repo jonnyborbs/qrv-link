@@ -26,6 +26,17 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 </p>
 <p align="center"><em>The ESP32-S3-DevKitC-1-N16R8 board</em></p>
 
+### Bridge the USB-OTG solder switch
+- On the back side of the board, you'll see a small solder jumper labeled **USB-OTG**. This jumper must be bridged with a small blob of solder. 
+- Paste and hot air reflow will do the cleanest job, but it's hard to mess up with a fine tipped iron. 
+
+**If you don't bridge this jumper, no voltage will go to the Radio connected USB port and the adapter will not work.**
+
+<p align="center">
+  <img src="images/ESP32-S3-DevKitC-1-N16R8-Underside.jpg" alt="The underside of the ESP-32-DevKitC-1 board, showing the USB-OTG solder switch that must be bridged" width="240">
+</p>
+<p align="center"><em>The USB-OTG solder switch you must jump</em></p>
+
 ### Flash your board
 - Ready-to-flash firmware is on the
 **[latest release page](https://github.com/jonnyborbs/qrv-link/releases/latest)**,
