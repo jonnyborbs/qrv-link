@@ -21,6 +21,11 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 - Development was done on the AITRIP **ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
   available [on Amazon](https://link.amazon/B066pf0Qa). Be sure you get this variant of the board - there is another that has different component orientations and the case will not fit it. The functionality of that other variant is not tested and it may have a different GPIO pinout for the neopixel.
 
+<p align="center">
+  <img src="images/ESP32-S3-DevKitC-1-N16R8.jpg" alt="The ESP32-S3-DevKitC-1-N16R8 board, top view: ESP32-S3 module, RST and BOOT buttons, RGB LED and two USB-C ports" width="240">
+</p>
+<p align="center"><em>The ESP32-S3-DevKitC-1-N16R8 board</em></p>
+
 ### Flash your board
 - Ready-to-flash firmware is on the
 **[latest release page](https://github.com/jonnyborbs/qrv-link/releases/latest)**,
@@ -168,11 +173,6 @@ idf.py -B build-bblink -D SDKCONFIG=build-bblink/sdkconfig \
 
 - AITRIP **ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
   available [on Amazon](https://link.amazon/B066pf0Qa). Be sure you get this variant of the board - there is another that has different component orientations and the case will not fit it. The functionality of that other variant is not tested and it may have a different GPIO pinout for the neopixel.
-  <p align="center">
-  <img src="images/ESP32-S3-DevKitC-1-N16R8.jpg" alt="The ESP32-S3-DevKitC-1-N16R8 board, top view: ESP32-S3 module, RST and BOOT buttons, RGB LED and two USB-C ports" width="240">
-</p>
-<p align="center"><em>The ESP32-S3-DevKitC-1-N16R8 board.</em></p>
-
 - **USB-OTG solder jumper bridged** on the DevKitC, so the board's 5 V feeds
   VBUS on the native USB port (needed for USB host mode).
 - DevKitC **"UART" USB-C port** (labeled **"COM"** on some board versions)
