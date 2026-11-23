@@ -5,6 +5,11 @@
 ESP32-S3 firmware that bridges iOS packet/KISS apps over Bluetooth Low Energy
 to a Kenwood TM-D750 mobile radio over wired USB.
 
+<p align="center">
+  <img src="enclosure/images/case-front-iso.png" alt="The QRV Link adapter in its 3D-printed case: a slim black case with orange QRV Link lettering" width="640">
+</p>
+<p align="center"><em>The adapter in its <a href="#3d-printed-case">3D-printable case</a>.</em></p>
+
 The TM-D750 only accepts incoming Bluetooth connections while it is in Pairing
 Mode, so a Bluetooth SPP adapter can never reconnect to it. Its main-unit USB
 port is a standard CDC-ACM serial port, so QRV Link talks to the radio over USB
@@ -158,10 +163,56 @@ idf.py -B build-bblink -D SDKCONFIG=build-bblink/sdkconfig \
 - **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** so the TNC's
   KISS port is the USB port (CAT works over USB with either setting). KISS runs
   on the band the radio's TNC is set to.
+- Optional: a **[3D-printed case](#3d-printed-case)** for the board.
 
 The radio enumerates as USB Full Speed VID `0x2166` / PID `0x9030` ("TM_D750"),
 a composite device with a CDC-ACM serial port (interfaces 0 and 1) and USB
 Audio (ignored).
+
+### 3D-printed case
+
+<p align="center">
+  <img src="enclosure/images/case-front.png" alt="Front face of the case with the orange labels" height="360">
+  &nbsp;&nbsp;
+  <img src="enclosure/images/case-back-door-open.png" alt="Back of the case with the sliding door partway out" height="360">
+</p>
+
+A slim two-part case: a body with the labels inlaid on its face and a plain
+back door that slides in and clicks shut. "RADIO | PC/V+" on the end marks
+which USB-C port goes where, and RESET/BOOT mark the buttons. Everything is in
+[`enclosure/`](enclosure/):
+
+| Folder | Contents |
+| --- | --- |
+| `print_files/` | STLs in print orientation: body, text inlay, door |
+| `bambu_project/` | Ready-to-print Bambu Studio project (`QRV_v4_project.3mf`) |
+| `cad_step/` | STEP files of the body, text and door, for editing in CAD |
+| `scripts/` | Parametric generator (CadQuery), fit checker and render script |
+
+**Printing:**
+- The case was designed for a Bambu P1S with AMS: a black body and door,
+  orange lettering.
+- The easiest route is to open the Bambu Studio project, which already has the
+  settings: 0.12 mm layers, thin-wall and elephant-foot adjustments, and the
+  body and text as one two-part object.
+- From the STLs, keep `qrv_v4_body_print.stl` and
+  `qrv_v4_body_text_print.stl` together as **one object with two parts**; they
+  share a coordinate frame. Print the door separately, outer face down.
+- On a single-colour printer, print just the body and the door. The labels
+  are then recessed into the face instead of inlaid.
+
+**Assembly:**
+1. Drop the board into the open back, USB-C ports toward the end wall.
+2. Slide the door in from the USB-C end until it clicks.
+
+To open the case again, put a flat screwdriver into the pocket at the antenna
+end of the door and give it a quarter twist.
+
+The case was modeled around the board's CAD shape from GrabCAD,
+[ESP32-S3-WROOM-1 DevKit-1](https://grabcad.com/library/esp32-s3-wroom-1-devkit-1).
+Like the firmware, the case design files are licensed under the MPL-2.0. See
+[`enclosure/README.md`](enclosure/README.md) for the generator scripts and
+the fit tunables.
 
 ### Status LED
 
@@ -264,4 +315,6 @@ attached file.
 ## License
 
 QRV Link is licensed under the [Mozilla Public License 2.0](LICENSE)
-(SPDX: `MPL-2.0`).
+(SPDX: `MPL-2.0`). This includes the 3D-printable case in
+[`enclosure/`](enclosure/): the STL, STEP and Bambu Studio files and the
+scripts that generate them.
