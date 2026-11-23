@@ -2,40 +2,53 @@
 
 [![Build firmware](https://github.com/jonnyborbs/qrv-link/actions/workflows/build.yml/badge.svg)](https://github.com/jonnyborbs/qrv-link/actions/workflows/build.yml)
 
-ESP32-S3 firmware that bridges iOS packet/KISS apps over Bluetooth Low Energy
-to a Kenwood TM-D750 mobile radio over wired USB.
+QRV Link is an open source ESP32-S3 firmware that bridges iOS packet/KISS apps over Bluetooth Low Energy
+to a Kenwood TM-D750 mobile radio over its wired USB serial port, using a commonly available ESP32-S3-DevKitC-1-N16R8 board that costs under $10.
 
 <p align="center">
   <img src="enclosure/images/case-front-iso.png" alt="The QRV Link adapter in its 3D-printed case: a slim black case with orange QRV Link lettering" width="640">
 </p>
 <p align="center"><em>The adapter in its <a href="#3d-printed-case">3D-printable case</a>.</em></p>
 
-The TM-D750 only accepts incoming Bluetooth connections while it is in Pairing
-Mode, so a Bluetooth SPP adapter can never reconnect to it. Its main-unit USB
-port is a standard CDC-ACM serial port, so QRV Link talks to the radio over USB
-and keeps BLE only on the app side.
+The QRV Link project was inspired by Island Magic's [B.B. Link](https://getbblink.com) project, which connects iOS
+packet apps to Kenwood radios over Bluetooth. This project seeks to continue its legacy with new hardware for newly released radios such as the TM-D750. It is an independent implementation and shares no code with B.B. Link.
 
-QRV Link was inspired by Island Magic's [B.B. Link](https://getbblink.com) project, which connects iOS
-packet apps to Kenwood radios over Bluetooth. QRV Link seeks to continue its
-legacy with new hardware for newly released radios such as the TM-D750. It is
-an independent implementation and shares no code with B.B. Link.
+The reason the much loved B.B. Link will not work for the TM-D750 is because this radio uses a very different internal Bluetooth stack to the TH-D74 and TH-D75. The D750 uses a different pairing authentication model, and only accepts incoming Bluetooth connections while it is in Pairing Mode, so a Bluetooth SPP adapter like B.B. Link can never reconnect to it after pairing is completed.
 
-Status: **early test releases (0.0.x)**. Apps that speak the
-[BLE-KISS API](https://github.com/hessu/aprs-specs/blob/master/BLE-KISS-API.md)
-find the adapter as **"QRV Link"**, and KISS frames flow both ways between the
-app and the radio's built-in TNC. The adapter also supports the
-[KISS hardware commands](#hardware-commands-kiss-sethardware) that apps use for
-frequency control, baud rate and version/capability queries. Tested with
-RadioMail and RadioMessenger on iOS and with a Mac BLE test client.
+## Getting Started
 
-## Download
+### Buy a board
+- Development was done on the AITRIP **ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
+  available [on Amazon](https://link.amazon/B066pf0Qa). Be sure you get this variant of the board - there is another that has different component orientations and the case will not fit it. The functionality of that other variant is not tested and it may have a different GPIO pinout for the neopixel.
 
-Ready-to-flash firmware is on the
+### Flash your board
+- Ready-to-flash firmware is on the
 **[latest release page](https://github.com/jonnyborbs/qrv-link/releases/latest)**,
 with step-by-step instructions for flashing it from a web browser. No
 development tools are needed.
 
-## How it works
+### Configure your radio
+- On your **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** so the TNC's
+  KISS port is the USB port (CAT works over USB with either setting). KISS runs
+  on the band the radio's TNC is set to.
+- You can alternately set this to **USB (Front Panel)** depending on where you plan to connect the QRV Link
+
+### Print an enclosure
+- Use the ready-to-print Bambu Studio `.3MF` project in [`enclosure/bambu_project/`](enclosure/bambu_project)
+- Or, use the provided `.STL` files in [`enclosure/print_files/`](enclosure/print_files)
+
+### Assemble and connect
+- Insert the board into the enclosure. It only fits one way. Slide the cover into place.
+- Connect the `Radio` port on the QRV Link to the USB-C port on your TM-D750 which you set option **984** to
+- Connect the `PC/V+` port on the QRV Link to a powered USB-C port. Sadly, the TM-D750 does not provide power on its port so this second connection is necessary.
+
+### Connect via your app and get on the air!
+- Apps like APRS.fi, Radio Messenger, Radio Mail, etc will discover the KISS TNC protocol advertised by QRV Link right away.
+
+
+## TECHNICAL DETAILS FOR OUR AI FRIENDS
+
+### How it works
 
 - **Idle:** the adapter advertises the BLE-KISS service and keeps the radio's
   USB serial port in CAT mode. It reads the radio's TNC mode (`TN`) whenever
@@ -71,7 +84,7 @@ The adapter advertises as "QRV Link" (QRV is the Q-code for "I am ready").
 
 **Capabilities declared during discovery:** the TX characteristic carries a
 Characteristic User Description descriptor (`0x2901`) reading
-**`Write KISS data:01`**, a convention from Island Magic. The text after the
+**`Write KISS data:01`**, a convention which we collaborated on with Island Magic. The text after the
 colon is a hex bitmask of capabilities; `0x01` means the adapter supports
 frequency control (QSY). Apps read it while discovering the service, before any
 KISS traffic, so they don't need to rely on the adapter's name.
@@ -153,8 +166,13 @@ idf.py -B build-bblink -D SDKCONFIG=build-bblink/sdkconfig \
 
 ## Hardware
 
-- Espressif **ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
-  available [on Amazon](https://link.amazon/B066pf0Qa).
+- AITRIP **ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
+  available [on Amazon](https://link.amazon/B066pf0Qa). Be sure you get this variant of the board - there is another that has different component orientations and the case will not fit it. The functionality of that other variant is not tested and it may have a different GPIO pinout for the neopixel.
+  <p align="center">
+  <img src="images/ESP32-S3-DevKitC-1-N16R8.jpg" alt="The ESP32-S3-DevKitC-1-N16R8 board, top view: ESP32-S3 module, RST and BOOT buttons, RGB LED and two USB-C ports" width="240">
+</p>
+<p align="center"><em>The ESP32-S3-DevKitC-1-N16R8 board.</em></p>
+
 - **USB-OTG solder jumper bridged** on the DevKitC, so the board's 5 V feeds
   VBUS on the native USB port (needed for USB host mode).
 - DevKitC **"UART" USB-C port** (labeled **"COM"** on some board versions)
@@ -164,6 +182,8 @@ idf.py -B build-bblink -D SDKCONFIG=build-bblink/sdkconfig \
   KISS port is the USB port (CAT works over USB with either setting). KISS runs
   on the band the radio's TNC is set to.
 - Optional: a **[3D-printed case](#3d-printed-case)** for the board.
+
+
 
 The radio enumerates as USB Full Speed VID `0x2166` / PID `0x9030` ("TM_D750"),
 a composite device with a CDC-ACM serial port (interfaces 0 and 1) and USB
