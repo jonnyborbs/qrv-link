@@ -7,6 +7,12 @@
 [![ESP-IDF v5.5.6](https://img.shields.io/badge/ESP--IDF-v5.5.6-E7352C?logo=espressif&logoColor=white)](https://github.com/espressif/esp-idf/releases/tag/v5.5.6)
 [![Bluetooth LE (BLE-KISS)](https://img.shields.io/badge/Bluetooth-LE%20(BLE--KISS)-0082FC?logo=bluetooth&logoColor=white)](https://github.com/hessu/aprs-specs/blob/master/BLE-KISS-API.md)
 
+[![Support QRV Link on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20QRV%20Link-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/kb0rb) 
+
+Like this project? [Buy me a coffee!](https://ko-fi.com/kb0rb) 
+
+And check out my other apps, [Greyline FT8](https://greylineft8.com), [AllStar Node Control](https://kb0rb.net/projects/allstar-node-control/), and [We Have Wine at Home!](https://wehavewineathome.app)
+
 QRV Link is an open source ESP32-S3 firmware that bridges iOS packet/KISS apps over Bluetooth Low Energy
 to a Kenwood TM-D750 mobile radio over its wired USB serial port, using a commonly available ESP32-S3-DevKitC-1-N16R8 board that costs under $10.
 
