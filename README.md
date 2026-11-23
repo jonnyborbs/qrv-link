@@ -18,7 +18,7 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 ## Getting Started
 
 ### Buy a board
-- Development was done on the AITRIP **ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
+- Development was done on the **AITRIP ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
   available [on Amazon](https://link.amazon/B066pf0Qa). Be sure you get this variant of the board - there is another that has different component orientations and the case will not fit it. The functionality of that other variant is not tested and it may have a different GPIO pinout for the neopixel.
 
 <p align="center">
