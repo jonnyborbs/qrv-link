@@ -41,7 +41,8 @@ typedef void (*ble_kiss_session_cb_t)(bool active, void *ctx);
  * descriptor (0x2901) as "Write KISS data:XX", a convention from Island Magic
  * (RadioMail / B.B. Link). Apps read it during discovery.
  */
-#define BLE_KISS_CAP_QSY  0x01 /* SetHardware 0xEA / 0xEB frequency control */
+#define BLE_KISS_CAP_QSY        0x01 /* SetHardware 0xEA / 0xEB frequency control */
+#define BLE_KISS_CAP_BAUD_9600  0x02 /* SetHardware 0xF4 01: 9600 baud */
 
 typedef struct {
     const char *device_name;

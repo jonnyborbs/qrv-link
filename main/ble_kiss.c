@@ -40,7 +40,7 @@ static const ble_uuid128_t s_rx_uuid = KTS_UUID(0x03);
 #define CAPS_DESC_LABEL   "Write KISS data"
 
 static ble_kiss_config_t s_config;
-static char s_caps_desc[24]; /* "Write KISS data:01" */
+static char s_caps_desc[24]; /* e.g. "Write KISS data:03" */
 static uint16_t s_rx_val_handle;
 static uint8_t s_own_addr_type;
 static StreamBufferHandle_t s_notify_buf;
