@@ -49,7 +49,7 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 <p align="center"><em>The USB-OTG solder switch you must jump</em></p>
 
 ### Flash your board
-- Open the **[QRV Link installer](https://jonnyborbs.github.io/qrv-link/)** in
+- Open the **[QRV Link installer](https://qrvlink.kb0rb.net/)** in
   Google Chrome or Microsoft Edge on a computer, connect the board's **UART**
   (or **COM**) USB-C port to the computer, and click **Install/Upgrade QRV Link**.
   The installer shows what's on the board now, then installs the latest release
@@ -361,7 +361,7 @@ To make a release:
 3. Write the release notes (quote the SHA-256 from the run summary), then
    publish.
 4. Publishing runs [`.github/workflows/pages.yml`](.github/workflows/pages.yml),
-   which rebuilds the [installer](https://jonnyborbs.github.io/qrv-link/) on
+   which rebuilds the [installer](https://qrvlink.kb0rb.net/) on
    GitHub Pages with the firmware of every published release, the latest one
    preselected. It can also be run by hand (Actions → Publish install page).
 
