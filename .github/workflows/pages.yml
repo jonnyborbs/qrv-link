@@ -1,0 +1,55 @@
+name: Publish install page
+
+# Rebuilds the one-click install page (GitHub Pages) with the firmware of every
+# published release, so the installer offers the latest version by default and
+# any earlier one on request.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download every release's firmware
+        id: releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          echo "latest=${latest#v}" >> "$GITHUB_OUTPUT"
+          mkdir -p dl
+          for tag in $(gh release list -R "$GITHUB_REPOSITORY" --exclude-drafts \
+                         --exclude-pre-releases --limit 200 --json tagName --jq '.[].tagName'); do
+            gh release download "$tag" -R "$GITHUB_REPOSITORY" -p 'qrv-link-*-esp32s3.bin' -D dl
+          done
+          echo "Latest release: $latest"
+          ls -l dl
+
+      - name: Build the site
+        run: bash install/build-site.sh _site "${{ steps.releases.outputs.latest }}" dl/*.bin
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v5

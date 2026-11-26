@@ -49,16 +49,25 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 <p align="center"><em>The USB-OTG solder switch you must jump</em></p>
 
 ### Flash your board
-- Ready-to-flash firmware is on the
-**[latest release page](https://github.com/jonnyborbs/qrv-link/releases/latest)**,
-with step-by-step instructions for flashing it from a web browser. No
-development tools are needed.
+- Open the **[QRV Link installer](https://jonnyborbs.github.io/qrv-link/)** in
+  Google Chrome or Microsoft Edge on a computer, connect the board's **UART**
+  (or **COM**) USB-C port to the computer, and click **Install/Upgrade QRV Link**.
+  The installer shows what's on the board now, then installs the latest release
+  or upgrades to it. No development tools are needed.
+- On Windows you may need the board's
+  [CH343 USB driver](https://www.wch-ic.com/downloads/CH343SER_EXE.html) first.
+- The installer can also put any earlier release on the board: after you
+  connect, pick it from the **Version** list. Each
+  [release](https://github.com/jonnyborbs/qrv-link/releases) also has its
+  firmware file for installing from a terminal.
 
 ### Configure your radio
 - On your **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** so the TNC's
   KISS port is the USB port (CAT works over USB with either setting). KISS runs
   on the band the radio's TNC is set to.
-- You can alternately set this to **USB (Front Panel)** depending on where you plan to connect the QRV Link
+- You can alternately set this to **USB (Front Panel)** depending on where you plan to connect the QRV Link.
+  The front panel's USB port needs a QRV Link release newer than 0.0.7; earlier
+  versions only find the radio on the main unit's USB port.
 
 ### Print an enclosure
 - Use the ready-to-print Bambu Studio `.3MF` project in [`enclosure/bambu_project/`](enclosure/bambu_project)
@@ -206,17 +215,20 @@ idf.py -B build-bblink -D SDKCONFIG=build-bblink/sdkconfig \
   VBUS on the native USB port (needed for USB host mode).
 - DevKitC **"UART" USB-C port** (labeled **"COM"** on some board versions)
   **→ computer**: power, flashing and console logs.
-- DevKitC **"USB" (native) USB-C port → radio's main-unit USB port**.
-- **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** so the TNC's
-  KISS port is the USB port (CAT works over USB with either setting). KISS runs
-  on the band the radio's TNC is set to.
+- DevKitC **"USB" (native) USB-C port → radio's main-unit or front-panel USB port**.
+- **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** or
+  **USB (Front Panel)** to match the port you use, so the TNC's KISS port is
+  that USB port (CAT works over USB with either setting). KISS runs on the band
+  the radio's TNC is set to.
 - Optional: a **[3D-printed case](#3d-printed-case)** for the board.
 
 
 
-The radio enumerates as USB Full Speed VID `0x2166` / PID `0x9030` ("TM_D750"),
-a composite device with a CDC-ACM serial port (interfaces 0 and 1) and USB
-Audio (ignored).
+The radio's main unit enumerates as USB Full Speed VID `0x2166` / PID `0x9030`
+("TM_D750"), a composite device with a CDC-ACM serial port (interfaces 0 and 1)
+and USB Audio (ignored). The front panel's USB port enumerates as PID `0x9032`
+with a CDC-ACM serial port only. QRV Link looks for both and opens whichever is
+plugged in. Front-panel support is not yet tested on a radio.
 
 ### 3D-printed case
 
@@ -348,10 +360,29 @@ To make a release:
    `qrv-link-0.0.6-esp32s3.bin` attached.
 3. Write the release notes (quote the SHA-256 from the run summary), then
    publish.
+4. Publishing runs [`.github/workflows/pages.yml`](.github/workflows/pages.yml),
+   which rebuilds the [installer](https://jonnyborbs.github.io/qrv-link/) on
+   GitHub Pages with the firmware of every published release, the latest one
+   preselected. It can also be run by hand (Actions → Publish install page).
 
 ESP-IDF stamps the build time into the image, so locally built images never
 match the CI image byte for byte. Release notes should quote the SHA-256 of the
 attached file.
+
+### Install page
+
+The installer is [`install/index.html`](install/index.html), a single page that
+uses [esptool-js](https://github.com/espressif/esptool-js) over Web Serial. It
+reads the app description from the board's flash to show which firmware is
+installed, offers every release (the latest preselected), writes the chosen
+merged image at `0x0` and verifies it. The firmware is served from the same
+site as the page, since browsers can't fetch release downloads directly. To try
+the page locally (Web Serial works on `localhost`):
+
+```sh
+install/build-site.sh /tmp/qrv-site X.Y.Z qrv-link-*-esp32s3.bin   # X.Y.Z = latest
+python3 -m http.server -d /tmp/qrv-site 8000   # then open http://localhost:8000
+```
 
 ## References
 

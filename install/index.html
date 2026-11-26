@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Install QRV Link</title>
+  <meta name="description" content="Install or upgrade the QRV Link firmware on an ESP32-S3-DevKitC-1 straight from your browser.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121214;
+      --card: #1c1c1f;
+      --raised: #26262a;
+      --text: #ececee;
+      --muted: #a5a5ad;
+      --border: #2f2f34;
+      --accent: #ff7a2e;
+      --accent-text: #141416;
+      --code-bg: #2a2a2f;
+      --warn-bg: #2b2117;
+      --warn-border: #6b4a22;
+      --ok: #4cc38a;
+      --bad: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { text-align: center; }
+    .hero {
+      display: block;
+      margin: 0 auto;
+      padding: 8px 0 0;
+      background: radial-gradient(closest-side, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 100%);
+    }
+    .hero img {
+      display: block;
+      width: 100%;
+      max-width: 460px;
+      height: auto;
+      margin: 0 auto;
+      filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
+    }
+    h1 { font-size: 2rem; margin: 8px 0 4px; letter-spacing: -0.01em; }
+    .tagline { color: var(--muted); margin: 0 0 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin: 16px 0;
+    }
+    .install { text-align: center; }
+    .install p { margin: 10px 0 0; color: var(--muted); font-size: 0.95rem; }
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--raised);
+      color: var(--text);
+      font: 600 1rem/1 inherit;
+      font-family: inherit;
+      padding: 12px 22px;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.12); }
+    button:disabled { opacity: 0.5; cursor: default; filter: none; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    .install-btn { font-size: 1.1rem; padding: 16px 36px; }
+    .notice {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      text-align: left;
+      color: var(--text);
+    }
+    h2 { font-size: 1.15rem; margin: 0 0 10px; }
+    ul, ol { margin: 0; padding-left: 1.25rem; }
+    li { margin: 6px 0; }
+    code { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; font-size: 0.92em; }
+    a { color: var(--accent); }
+    details { border-top: 1px solid var(--border); padding: 10px 0; }
+    details:first-of-type { border-top: 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    details p, details ul { margin: 8px 0 0; }
+    footer { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 28px; }
+    [hidden] { display: none !important; }
+
+    /* Install dialog */
+    dialog {
+      width: min(560px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.65); }
+    .dlg { padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 14px; }
+    .dlg h3 { margin: 0; font-size: 1.2rem; }
+    .dlg p { margin: 0; }
+    .dlg .muted { color: var(--muted); font-size: 0.95rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    .actions .left { margin-right: auto; }
+    .board {
+      display: flex; gap: 12px; align-items: flex-start;
+      background: var(--raised); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    }
+    .board .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; margin-top: 6px; background: var(--muted); }
+    .board .dot.ok { background: var(--ok); }
+    .board .dot.other { background: var(--accent); }
+    .board strong { display: block; }
+    .field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+    .field label { font-weight: 600; }
+    .field select {
+      flex: 1 1 200px; min-width: 0;
+      background: var(--raised); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; font: inherit;
+    }
+    .field a { font-size: 0.92rem; }
+    .board span { color: var(--muted); font-size: 0.92rem; }
+    .spinner {
+      width: 22px; height: 22px; border-radius: 50%; flex: none;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .row { display: flex; align-items: center; gap: 12px; }
+    progress { width: 100%; height: 10px; accent-color: var(--accent); }
+    .big-icon { font-size: 2rem; line-height: 1; }
+    .big-icon.ok { color: var(--ok); }
+    .big-icon.bad { color: var(--bad); }
+    pre.log {
+      margin: 0; height: 300px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+      background: #0b0b0c; border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #d6d6da;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="hero"><img src="case.png" alt="The QRV Link adapter in its 3D-printed case" width="1228" height="849"></div>
+    <h1>Install QRV Link</h1>
+    <p class="tagline">Connect iPhone and iPad packet apps to a Kenwood TM-D750 over Bluetooth.</p>
+  </header>
+
+  <section class="card install">
+    <button id="start" class="primary install-btn" type="button">Install/Upgrade QRV Link</button>
+    <div id="unsupported" class="notice" hidden>
+      <strong>This browser can't install firmware.</strong> Open this page in
+      <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a Mac,
+      Windows or Linux computer. Safari, Firefox and phones aren't supported.
+    </div>
+    <div id="insecure" class="notice" hidden>
+      <strong>This page must be opened over HTTPS</strong> to install firmware.
+    </div>
+    <p id="version">Installs the latest QRV Link release.</p>
+    <p>Need an earlier version? After you connect, pick it from the <strong>Version</strong> list.</p>
+    <p>Already have QRV Link? The same button shows which version is on your board and upgrades it.</p>
+  </section>
+
+  <section class="card">
+    <h2>What you need</h2>
+    <ul>
+      <li>An <strong>ESP32-S3-DevKitC-1-N16R8</strong> board (16 MB flash, 8 MB PSRAM),
+        <a href="https://link.amazon/B066pf0Qa">available on Amazon</a>, with its
+        <a href="https://github.com/jonnyborbs/qrv-link#hardware">USB-OTG solder jumper bridged</a>.</li>
+      <li>A computer with <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.</li>
+      <li>A <strong>USB-C data cable</strong>. Some charge-only cables don't carry data.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>How to install</h2>
+    <ol>
+      <li>Connect the board's USB-C port labeled <strong>UART</strong> or <strong>COM</strong> to
+        your computer. Don't use the port labeled <strong>USB</strong>; that one goes to the radio.
+        Quit any program that might be using the board, such as the Arduino IDE.</li>
+      <li>Click <strong>Install/Upgrade QRV Link</strong>. In the list that appears, choose the
+        board: it's called <code>USB Single Serial</code> on a Mac and
+        <code>USB-Enhanced-SERIAL CH343</code> on Windows. Click <strong>Connect</strong>.</li>
+      <li>The installer shows what's on the board now. Click <strong>Install</strong> (or
+        <strong>Upgrade</strong>) and wait about a minute. When it's done the board restarts and
+        its light flashes red, green, then blue.</li>
+    </ol>
+    <p>Then connect the board's <strong>USB</strong> port to your TM-D750 and choose
+      <strong>QRV Link</strong> in your app. The
+      <a href="https://github.com/jonnyborbs/qrv-link#readme">project page</a> explains the
+      radio settings and the status light.</p>
+  </section>
+
+  <section class="card">
+    <h2>If something goes wrong</h2>
+    <details>
+      <summary>The board isn't in the list</summary>
+      <ul>
+        <li>Check that the cable is in the <strong>UART</strong>/<strong>COM</strong> port and is a
+          data cable.</li>
+        <li>Quit other programs that use serial ports, such as the Arduino IDE.</li>
+        <li>On a Mac, if macOS asks whether to allow the accessory to connect, click
+          <strong>Allow</strong>.</li>
+        <li>On Windows, install the board's
+          <a href="https://www.wch-ic.com/downloads/CH343SER_EXE.html">CH343 USB driver</a>
+          (from WCH, the chip's maker), then unplug and replug the board.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>It can't connect to the board, or installing fails</summary>
+      <p>Put the board in download mode: hold down its <strong>BOOT</strong> button, press and
+        release <strong>RST</strong>, then let go of <strong>BOOT</strong>. Click
+        <strong>Install/Upgrade QRV Link</strong> again. When it's done, press
+        <strong>RST</strong> once to start the firmware.</p>
+    </details>
+    <details>
+      <summary>I want the board's logs for troubleshooting</summary>
+      <p>Click <strong>Install/Upgrade QRV Link</strong> and connect to the board, then click
+        <strong>Show logs</strong> instead of installing. The board restarts and its startup
+        messages appear; <strong>Copy</strong> puts them on your clipboard to share.</p>
+    </details>
+    <details>
+      <summary>I want a specific older version</summary>
+      <p>Click <strong>Install/Upgrade QRV Link</strong> and connect to the board, then choose
+        the version from the <strong>Version</strong> list before installing. Versions before
+        0.0.4 show up in apps as <strong>K.K. Link</strong>, QRV Link's earlier name. Every
+        version's changes are on the
+        <a href="https://github.com/jonnyborbs/qrv-link/releases">releases page</a>.</p>
+    </details>
+  </section>
+
+  <footer>
+    <p><a href="https://github.com/jonnyborbs/qrv-link">QRV Link on GitHub</a> ·
+      Licensed under the <a href="https://github.com/jonnyborbs/qrv-link/blob/main/LICENSE">MPL-2.0</a> ·
+      <a href="https://ko-fi.com/kb0rb">Support on Ko-fi</a></p>
+  </footer>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg">
+    <!-- Connecting -->
+    <div data-step="connecting" class="row">
+      <div class="spinner" aria-hidden="true"></div>
+      <div>
+        <h3 id="dlg-title">Connecting to the board…</h3>
+        <p class="muted">This takes a few seconds.</p>
+      </div>
+    </div>
+
+    <!-- What's on the board -->
+    <div data-step="status" hidden>
+      <div class="dlg" style="padding:0">
+        <h3>Your board</h3>
+        <div class="board">
+          <div id="st-dot" class="dot" aria-hidden="true"></div>
+          <div><strong id="st-title"></strong><span id="st-detail"></span></div>
+        </div>
+        <div class="field">
+          <label for="st-ver">Version</label>
+          <select id="st-ver"></select>
+          <a id="st-relnotes" href="#" target="_blank" rel="noopener">Release notes</a>
+        </div>
+        <p id="st-note" class="muted"></p>
+        <div id="st-warn" class="notice" hidden></div>
+        <div class="actions">
+          <button type="button" id="st-logs" class="left">Show logs</button>
+          <button type="button" data-act="cancel">Cancel</button>
+          <button type="button" class="primary" id="st-go"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Installing -->
+    <div data-step="installing" hidden>
+      <div class="dlg" style="padding:0">
+        <h3 id="in-title">Installing…</h3>
+        <progress id="in-bar" max="100" value="0"></progress>
+        <p class="muted"><span id="in-pct">Preparing…</span> Don't unplug the board or close this page.</p>
+      </div>
+    </div>
+
+    <!-- Done -->
+    <div data-step="done" hidden>
+      <div class="dlg" style="padding:0">
+        <div class="row"><div class="big-icon ok" aria-hidden="true">✓</div><h3 id="dn-title">Installed</h3></div>
+        <p id="dn-restart">The board has restarted.</p>
+        <p class="muted">Unplug it from the computer, connect its <strong>USB</strong> port to your
+          TM-D750, and choose <strong id="dn-app">QRV Link</strong> in your app.</p>
+        <div class="actions">
+          <button type="button" data-act="logs">Show logs</button>
+          <button type="button" class="primary" data-act="close">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Failed -->
+    <div data-step="error" hidden>
+      <div class="dlg" style="padding:0">
+        <div class="row"><div class="big-icon bad" aria-hidden="true">!</div><h3 id="er-title">Something went wrong</h3></div>
+        <p id="er-detail"></p>
+        <div class="actions">
+          <button type="button" data-act="logs">Show logs</button>
+          <button type="button" class="primary" data-act="close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div data-step="logs" hidden>
+      <div class="dlg" style="padding:0">
+        <h3>Logs</h3>
+        <p id="lg-note" class="muted">The installer's log, followed by the board's own messages.</p>
+        <pre id="log" class="log" tabindex="0"></pre>
+        <div class="actions">
+          <button type="button" id="lg-restart" hidden>Restart board</button>
+          <button type="button" id="lg-copy">Copy</button>
+          <button type="button" class="primary" data-act="close">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script type="module">
+  const REPO = "https://github.com/jonnyborbs/qrv-link";
+  const APP_OFFSET = 0x10000;     // factory app partition
+  const DESC_OFFSET = 0x20;       // esp_app_desc_t inside the app image
+  const DESC_MAGIC = 0xabcd5432;
+
+  const $ = (id) => document.getElementById(id);
+  const dlg = $("dlg");
+  const logEl = $("log");
+  let manifest = null;
+  let busy = false;
+  let port = null;
+  let consoleReader = null;
+  let consoleOpen = false;
+
+  // ----- page setup -------------------------------------------------------
+  const manifestReady = fetch("manifest.json", { cache: "no-store" })
+    .then((r) => r.json())
+    .then((m) => {
+      manifest = m;
+      const el = $("version");
+      const a = document.createElement("a");
+      a.href = `${REPO}/releases/tag/v${m.latest}`;
+      a.textContent = "release notes";
+      el.textContent = `Installs the latest release, QRV Link ${m.latest} (`;
+      el.appendChild(a);
+      el.append(").");
+      return m;
+    });
+
+  if (!window.isSecureContext) {
+    $("start").hidden = true;
+    $("insecure").hidden = false;
+  } else if (!("serial" in navigator)) {
+    $("start").hidden = true;
+    $("unsupported").hidden = false;
+  }
+
+  // ----- logging ----------------------------------------------------------
+  function log(line) {
+    const atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 24;
+    logEl.textContent += line;
+    if (atBottom) logEl.scrollTop = logEl.scrollHeight;
+  }
+  const terminal = {
+    clean() {},
+    writeLine(s) { log(s + "\n"); },
+    write(s) { log(s); },
+  };
+
+  // ----- dialog steps -----------------------------------------------------
+  function show(step) {
+    for (const el of dlg.querySelectorAll("[data-step]")) el.hidden = el.dataset.step !== step;
+  }
+  dlg.addEventListener("cancel", (e) => { if (busy) e.preventDefault(); });
+  dlg.addEventListener("close", () => { stopConsole(); });
+  dlg.addEventListener("click", (e) => {
+    const act = e.target.closest("[data-act]")?.dataset.act;
+    if (act === "close" || act === "cancel") dlg.close();
+    if (act === "logs") showLogs();
+  });
+
+  function fail(title, detail, err) {
+    if (err) log(`\nError: ${err.message || err}\n`);
+    $("er-title").textContent = title;
+    $("er-detail").textContent = detail;
+    show("error");
+  }
+
+  // ----- reading what's on the board -------------------------------------
+  function cstr(bytes, start, len) {
+    const s = bytes.subarray(start, start + len);
+    const end = s.indexOf(0);
+    return new TextDecoder().decode(end < 0 ? s : s.subarray(0, end)).trim();
+  }
+
+  function parseVersion(v) {
+    const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(v);
+    return m ? m.slice(1).map(Number) : null;
+  }
+
+  function compareVersions(a, b) {
+    for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+    return 0;
+  }
+
+  // What's on the board: {dot, title, detail, ours, have}. "have" is the
+  // installed QRV Link / K.K. Link version string when "ours" is true.
+  function describeBoard(head) {
+    if (head.every((b) => b === 0xff)) {
+      return { dot: "", title: "No firmware installed", detail: "This board is empty.", ours: false };
+    }
+    const dv = new DataView(head.buffer, head.byteOffset, head.byteLength);
+    const hasDesc = head[0] === 0xe9 && dv.getUint32(DESC_OFFSET, true) === DESC_MAGIC;
+    if (!hasDesc) {
+      return { dot: "other", title: "Other firmware installed",
+        detail: "This board is running something other than QRV Link.", ours: false };
+    }
+    const version = cstr(head, DESC_OFFSET + 16, 32);
+    const project = cstr(head, DESC_OFFSET + 48, 32);
+    if (project === "qrv-link" || project === "kk-link") {
+      const name = project === "kk-link" ? "K.K. Link" : "QRV Link";
+      return { dot: "ok", title: `${name} ${version} installed`, ours: true, have: version,
+        detail: project === "kk-link" ? "K.K. Link was QRV Link's earlier name." : "This board already runs QRV Link." };
+    }
+    const what = [project, version].filter(Boolean).join(" ");
+    return { dot: "other", title: "Other firmware installed", ours: false,
+      detail: what ? `This board is running ${what}, not QRV Link.` : "This board is running something other than QRV Link." };
+  }
+
+  // What installing release "entry" would do to this board: {note, action}.
+  function planFor(board, entry, latest) {
+    const label = `${entry.name} ${entry.version}`;
+    const isLatest = entry.version === latest;
+    let plan;
+    if (!board.ours) {
+      plan = { note: board.dot === "other" ? "Installing replaces it." : "", action: `Install ${label}` };
+    } else {
+      const have = parseVersion(board.have);
+      const cmp = have ? compareVersions(have, parseVersion(entry.version)) : null;
+      if (cmp === 0) {
+        plan = { action: `Reinstall ${label}`, note: (isLatest ? "That's the latest version. " : "") +
+          "You can reinstall it if the board isn't working right." };
+      } else if (cmp === -1) {
+        plan = { action: `Upgrade to ${label}`, note: isLatest ? `${label} is the latest version.` : "" };
+      } else if (cmp === 1) {
+        plan = { action: `Downgrade to ${label}`, note: `This replaces ${board.have} with an older version.` };
+      } else {
+        plan = { action: `Install ${label}`, note: "That isn't a published release. Installing replaces it." };
+      }
+    }
+    if (entry.name !== "QRV Link") {
+      plan.note = (plan.note ? plan.note + " " : "") +
+        `This version is from before the rename, so apps list it as \u201c${entry.name}\u201d.`;
+    }
+    return plan;
+  }
+
+  // ----- the install flow -------------------------------------------------
+  async function start() {
+    let picked;
+    try {
+      picked = await navigator.serial.requestPort();
+    } catch {
+      return; // the person closed the port chooser
+    }
+    port = picked;
+    logEl.textContent = "";
+    $("lg-restart").hidden = true;
+    busy = true;
+    show("connecting");
+    dlg.showModal();
+
+    let m, ESPLoader, Transport;
+    try {
+      ({ ESPLoader, Transport } = await import("https://unpkg.com/esptool-js@0.7.1/bundle.js"));
+      m = await manifestReady;
+    } catch (err) {
+      busy = false;
+      return fail("Couldn't load the firmware", "Check your internet connection and reload this page.", err);
+    }
+    // Firmware downloads, started on demand; the latest one starts right away.
+    const downloads = new Map();
+    const download = (entry) => {
+      if (!downloads.has(entry.firmware)) {
+        const p = fetch(entry.firmware).then((r) => {
+          if (!r.ok) throw new Error(`firmware download failed (HTTP ${r.status})`);
+          return r.arrayBuffer();
+        });
+        p.catch(() => {});
+        downloads.set(entry.firmware, p);
+      }
+      return downloads.get(entry.firmware);
+    };
+    const latestEntry = m.versions.find((v) => v.version === m.latest) || m.versions[0];
+    download(latestEntry);
+
+    const transport = new Transport(port, false);
+    const loader = new ESPLoader({ transport, baudrate: 921600, romBaudrate: 115200, terminal });
+    let connected = false;
+    try {
+      const chip = await loader.main("default_reset");
+      connected = true;
+      if (loader.chip.CHIP_NAME !== "ESP32-S3") {
+        throw Object.assign(new Error(`unsupported chip: ${chip}`), { friendly:
+          ["This isn't an ESP32-S3", `The board you picked is ${chip}. QRV Link runs on the ESP32-S3-DevKitC-1-N16R8.`] });
+      }
+      const flashSize = await loader.detectFlashSize();
+      const head = await loader.readFlash(APP_OFFSET, DESC_OFFSET + 256);
+      const board = describeBoard(head);
+      log(`\nBoard: ${board.title}. ${board.detail}\n`);
+
+      $("st-dot").className = "dot " + board.dot;
+      $("st-title").textContent = board.title;
+      $("st-detail").textContent = " " + board.detail;
+      const sel = $("st-ver");
+      sel.replaceChildren(...m.versions.map((v) => {
+        const extra = [v.version === m.latest && "latest", v.name !== "QRV Link" && `named ${v.name}`]
+          .filter(Boolean).join(", ");
+        return new Option(extra ? `${v.version} (${extra})` : v.version, v.version);
+      }));
+      sel.value = latestEntry.version;
+      const selected = () => m.versions.find((v) => v.version === sel.value) || latestEntry;
+      const updatePlan = () => {
+        const entry = selected();
+        const plan = planFor(board, entry, m.latest);
+        $("st-note").textContent = plan.note;
+        $("st-note").hidden = !plan.note;
+        $("st-go").textContent = plan.action;
+        $("st-relnotes").href = `${REPO}/releases/tag/v${entry.version}`;
+      };
+      sel.onchange = updatePlan;
+      updatePlan();
+      const warn = $("st-warn");
+      warn.hidden = !flashSize || flashSize === "16MB";
+      warn.textContent = `This board has ${flashSize} of flash. QRV Link is built for the 16 MB ` +
+        "ESP32-S3-DevKitC-1-N16R8 and may not start on this board.";
+      busy = false;
+      show("status");
+
+      // "install", "logs", or "cancel" (Cancel, Esc, or the dialog closing).
+      const choice = await new Promise((resolve) => {
+        const onGo = () => { cleanup(); resolve("install"); };
+        const onLogs = () => { cleanup(); resolve("logs"); };
+        const onClose = () => { cleanup(); resolve("cancel"); };
+        const cleanup = () => {
+          $("st-go").removeEventListener("click", onGo);
+          $("st-logs").removeEventListener("click", onLogs);
+          dlg.removeEventListener("close", onClose);
+        };
+        $("st-go").addEventListener("click", onGo);
+        $("st-logs").addEventListener("click", onLogs);
+        dlg.addEventListener("close", onClose);
+      });
+      if (choice !== "install") {
+        // Leave the board running its firmware again, and free the port.
+        await loader.after("hard_reset");
+        await transport.disconnect();
+        connected = false;
+        // The console view restarts the board so its startup messages show.
+        if (choice === "logs") await showLogs();
+        return;
+      }
+
+      const entry = selected();
+      const label = `${entry.name} ${entry.version}`;
+      log(`\nInstalling ${label} (${entry.firmware})\n`);
+      busy = true;
+      $("in-title").textContent = `Installing ${label}…`;
+      $("in-bar").value = 0;
+      $("in-pct").textContent = "Preparing…";
+      show("installing");
+
+      const data = new Uint8Array(await download(entry));
+      const { default: SparkMD5 } = await import("https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/+esm");
+      await loader.writeFlash({
+        fileArray: [{ data, address: 0 }],
+        flashMode: "keep",
+        flashFreq: "keep",
+        flashSize: "keep",
+        eraseAll: false,
+        compress: true,
+        reportProgress: (_i, written, total) => {
+          const pct = Math.floor((written / total) * 100);
+          $("in-bar").value = pct;
+          $("in-pct").textContent = `${pct}% done.`;
+        },
+        calculateMD5Hash: (image) =>
+          SparkMD5.ArrayBuffer.hash(image.buffer.slice(image.byteOffset, image.byteOffset + image.byteLength)),
+      });
+      log("\nRestarting the board…\n");
+      await loader.after("hard_reset");
+      await transport.disconnect();
+      connected = false;
+      busy = false;
+      $("dn-title").textContent = `${label} is installed`;
+      $("dn-restart").textContent = entry.led
+        ? "The board has restarted. Its light flashes red, green, then blue, then goes off until an app connects."
+        : "The board has restarted.";
+      $("dn-app").textContent = entry.name;
+      show("done");
+    } catch (err) {
+      busy = false;
+      try { await transport.disconnect(); } catch {}
+      try { await port.close(); } catch {}
+      if (err.friendly) return fail(err.friendly[0], err.friendly[1], err);
+      const msg = String(err && err.message || err);
+      if (/Failed to open|already open|NetworkError.*open/i.test(msg)) {
+        return fail("The board is busy",
+          "Another program is using the board. Quit programs such as the Arduino IDE or a serial monitor, then try again.", err);
+      }
+      if (!connected) {
+        return fail("Couldn't connect to the board",
+          "Check that you picked the board and that the cable is in its UART/COM port. If it still fails, " +
+          "hold BOOT, press and release RST, let go of BOOT, and try again.", err);
+      }
+      return fail("Installing didn't finish",
+        "Nothing is lost: try again. If it keeps failing, put the board in download mode (hold BOOT, press and " +
+        "release RST, let go of BOOT) and try again, then press RST when it's done.", err);
+    } finally {
+      if (!dlg.open) stopConsole();
+    }
+  }
+
+  // ----- logs and the board's console ------------------------------------
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function showLogs() {
+    show("logs");
+    logEl.scrollTop = logEl.scrollHeight;
+    if (!port || consoleOpen) return;
+    try {
+      await port.open({ baudRate: 115200 });
+    } catch (err) {
+      log(`\n(Couldn't open the board's console: ${err.message})\n`);
+      return;
+    }
+    consoleOpen = true;
+    $("lg-restart").hidden = false;
+    log("\n--- Board console (115200 baud) ---\n");
+    readConsole();
+    await restartBoard();
+  }
+
+  async function restartBoard() {
+    if (!consoleOpen) return;
+    log("\n--- Restarting the board ---\n");
+    // On this board RTS drives EN and DTR drives BOOT: pulse EN with BOOT released.
+    await port.setSignals({ dataTerminalReady: false, requestToSend: true });
+    await sleep(120);
+    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+  }
+
+  async function readConsole() {
+    const decoder = new TextDecoder();
+    while (consoleOpen && port.readable) {
+      consoleReader = port.readable.getReader();
+      try {
+        for (;;) {
+          const { value, done } = await consoleReader.read();
+          if (done) break;
+          log(decoder.decode(value, { stream: true }).replace(/\x1b\[[0-9;]*m/g, "").replace(/\r/g, ""));
+        }
+      } catch (err) {
+        // Non-fatal errors (such as a buffer overrun) leave the port readable; keep going.
+        if (consoleOpen) log(`\n(${err.message})\n`);
+      } finally {
+        consoleReader.releaseLock();
+        consoleReader = null;
+      }
+    }
+  }
+
+  async function stopConsole() {
+    if (!consoleOpen) return;
+    consoleOpen = false;
+    try { await consoleReader?.cancel(); } catch {}
+    await sleep(50);
+    try { await port.close(); } catch {}
+  }
+
+  $("start").addEventListener("click", start);
+  $("lg-restart").addEventListener("click", restartBoard);
+  $("lg-copy").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(logEl.textContent);
+      $("lg-copy").textContent = "Copied";
+      setTimeout(() => { $("lg-copy").textContent = "Copy"; }, 1500);
+    } catch {}
+  });
+</script>
+</body>
+</html>
