@@ -21,7 +21,7 @@
 
 static const char *TAG = "radio_usb";
 
-#define OPEN_TIMEOUT_MS   1000 /* each cdc_acm_host_open() attempt waits this long */
+#define OPEN_TIMEOUT_MS   500  /* each cdc_acm_host_open() attempt waits this long */
 #define USB_IN_BUF_SIZE   512
 #define USB_OUT_BUF_SIZE  512
 #define PORT_REINIT_MS    60000 /* re-initialize the root port this often while the radio is absent */
@@ -95,13 +95,25 @@ static void radio_usb_task(void *arg)
 
     for (;;) {
         if (!waiting_logged) {
-            ESP_LOGI(TAG, "waiting for radio (VID 0x%04x PID 0x%04x) on the native USB port",
-                     RADIO_USB_VID, RADIO_USB_PID);
+            ESP_LOGI(TAG, "waiting for radio (VID 0x%04x PID 0x%04x or 0x%04x) on the native USB port",
+                     RADIO_USB_VID, RADIO_USB_PID_MAIN, RADIO_USB_PID_PANEL);
             waiting_logged = true;
         }
 
+        /* Try the main unit's and the front panel's USB IDs in turn. */
+        static const struct {
+            uint16_t pid;
+            const char *where;
+        } ports[] = {
+            { RADIO_USB_PID_MAIN, "main unit" },
+            { RADIO_USB_PID_PANEL, "front panel" },
+        };
+        static size_t next_port;
+        const size_t p = next_port;
+        next_port = (next_port + 1) % (sizeof(ports) / sizeof(ports[0]));
+
         cdc_acm_dev_hdl_t dev = NULL;
-        esp_err_t err = cdc_acm_host_open(RADIO_USB_VID, RADIO_USB_PID, RADIO_USB_CDC_INTERFACE,
+        esp_err_t err = cdc_acm_host_open(RADIO_USB_VID, ports[p].pid, RADIO_USB_CDC_INTERFACE,
                                           &dev_config, &dev);
         if (err == ESP_ERR_NOT_FOUND) {
             /* Not there yet (open() already waited OPEN_TIMEOUT_MS). If it stays
@@ -126,7 +138,8 @@ static void radio_usb_task(void *arg)
             continue;
         }
         waiting_logged = false;
-        ESP_LOGI(TAG, "radio CDC-ACM port opened");
+        ESP_LOGI(TAG, "radio CDC-ACM port opened (%s USB, PID 0x%04x)", ports[p].where,
+                 ports[p].pid);
 
         if (esp_log_level_get(TAG) >= ESP_LOG_DEBUG) {
             cdc_acm_host_desc_print(dev);

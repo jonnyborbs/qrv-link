@@ -26,9 +26,12 @@
 extern "C" {
 #endif
 
-/* JVCKENWOOD TM-D750 main unit, USB Full Speed composite (CDC-ACM + Audio). */
-#define RADIO_USB_VID 0x2166
-#define RADIO_USB_PID 0x9030
+/* JVCKENWOOD TM-D750, USB Full Speed. The main unit's port is a composite
+ * device (CDC-ACM + USB Audio); the operating panel's USB-C port is CDC-ACM
+ * only. Both carry CAT and KISS (menu 984 picks which port KISS uses). */
+#define RADIO_USB_VID       0x2166
+#define RADIO_USB_PID_MAIN  0x9030 /* main unit */
+#define RADIO_USB_PID_PANEL 0x9032 /* operating (front) panel */
 /* CDC-ACM communication interface; the data interface (1) is found by the driver. */
 #define RADIO_USB_CDC_INTERFACE 0
 
