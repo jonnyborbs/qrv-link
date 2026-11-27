@@ -65,9 +65,9 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 - On your **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** so the TNC's
   KISS port is the USB port (CAT works over USB with either setting). KISS runs
   on the band the radio's TNC is set to.
-- You can alternately set this to **USB (Front Panel)** depending on where you plan to connect the QRV Link.
-  The front panel's USB port needs a QRV Link release newer than 0.0.7; earlier
-  versions only find the radio on the main unit's USB port.
+- Connect QRV Link to the **main unit's** USB port. The front panel's USB port
+  doesn't work with QRV Link yet: the adapter finds it, but the radio doesn't
+  answer there (see [Hardware](#hardware)).
 
 ### Print an enclosure
 - Use the ready-to-print Bambu Studio `.3MF` project in [`enclosure/bambu_project/`](enclosure/bambu_project)
@@ -215,20 +215,27 @@ idf.py -B build-bblink -D SDKCONFIG=build-bblink/sdkconfig \
   VBUS on the native USB port (needed for USB host mode).
 - DevKitC **"UART" USB-C port** (labeled **"COM"** on some board versions)
   **→ computer**: power, flashing and console logs.
-- DevKitC **"USB" (native) USB-C port → radio's main-unit or front-panel USB port**.
-- **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** or
-  **USB (Front Panel)** to match the port you use, so the TNC's KISS port is
-  that USB port (CAT works over USB with either setting). KISS runs on the band
-  the radio's TNC is set to.
+- DevKitC **"USB" (native) USB-C port → radio's main-unit USB port**.
+- **Kenwood TM-D750**: set menu **984 (KISS) = USB (Main Unit)** so the TNC's
+  KISS port is the USB port (CAT works over USB with either setting). KISS runs
+  on the band the radio's TNC is set to.
 - Optional: a **[3D-printed case](#3d-printed-case)** for the board.
 
 
 
 The radio's main unit enumerates as USB Full Speed VID `0x2166` / PID `0x9030`
 ("TM_D750"), a composite device with a CDC-ACM serial port (interfaces 0 and 1)
-and USB Audio (ignored). The front panel's USB port enumerates as PID `0x9032`
-with a CDC-ACM serial port only. QRV Link looks for both and opens whichever is
-plugged in. Front-panel support is not yet tested on a radio.
+and USB Audio (ignored).
+
+**Front panel (not working yet):** the operating panel's USB-C port enumerates
+as PID `0x9032` with a CDC-ACM serial port only. QRV Link looks for both IDs and
+opens the panel's port, and the panel reports DCD and DSR and accepts writes,
+but it never sends a reply: not with menu 984 on either setting, with RTS
+raised, at baud rates from 4800 to 115200, or after a 10-second wait. From a computer the
+same port answers CAT at once, with no DTR handshake. It isn't the USB-C
+cable signalling (an A-to-C cable, which tells the panel a host is attached,
+made no difference) or the OUT endpoint's data toggle. The cause is still
+unknown, so use the main unit's port for now.
 
 ### 3D-printed case
 
