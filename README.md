@@ -230,12 +230,20 @@ and USB Audio (ignored).
 **Front panel (not working yet):** the operating panel's USB-C port enumerates
 as PID `0x9032` with a CDC-ACM serial port only. QRV Link looks for both IDs and
 opens the panel's port, and the panel reports DCD and DSR and accepts writes,
-but it never sends a reply: not with menu 984 on either setting, with RTS
-raised, at baud rates from 4800 to 115200, or after a 10-second wait. From a computer the
-same port answers CAT at once, with no DTR handshake. It isn't the USB-C
-cable signalling (an A-to-C cable, which tells the panel a host is attached,
-made no difference) or the OUT endpoint's data toggle. The cause is still
-unknown, so use the main unit's port for now.
+but it never sends a reply. From a computer the same port answers CAT at once
+(macOS and Windows 11 at High Speed, and Windows XP at Full Speed, the ESP32-S3's
+only speed), so it isn't the USB speed. Also ruled out:
+- menu 984 on either setting;
+- DTR/RTS combinations, and baud rates from 4800 to 115200;
+- waiting up to 10 seconds before the first command;
+- the USB-C cable signalling, and the power on VBUS (4.79 V);
+- endpoint resets and `SET_INTERFACE`;
+- Windows' exact sequence of setup requests;
+- slower polling with quiet gaps between reads.
+
+The panel answers control requests but never sends data on its bulk IN
+endpoint to the ESP32-S3. The cause is still unknown, so use the main unit's
+port.
 
 ### 3D-printed case
 
