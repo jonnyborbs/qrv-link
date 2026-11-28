@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>Install QRV Link</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
   <meta name="description" content="Install or upgrade the QRV Link firmware on an ESP32-S3-DevKitC-1 straight from your browser.">
   <style>
     :root {
@@ -46,7 +48,22 @@
       margin: 0 auto;
       filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
     }
-    h1 { font-size: 2rem; margin: 8px 0 4px; letter-spacing: -0.01em; }
+    h1 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 2rem;
+      margin: 8px 0 4px;
+      letter-spacing: -0.01em;
+    }
+    h1 .mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 22%;
+      flex: none;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 6px 14px rgba(0, 0, 0, 0.45);
+    }
     .tagline { color: var(--muted); margin: 0 0 24px; }
     .card {
       background: var(--card);
@@ -150,7 +167,7 @@
 <main>
   <header>
     <div class="hero"><img src="case.png" alt="The QRV Link adapter in its 3D-printed case" width="1228" height="849"></div>
-    <h1>Install QRV Link</h1>
+    <h1><img class="mark" src="icon.png" alt="" width="256" height="256">Install QRV Link</h1>
     <p class="tagline">Connect iPhone and iPad packet apps to a Kenwood TM-D750 over Bluetooth.</p>
   </header>
 

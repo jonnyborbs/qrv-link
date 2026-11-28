@@ -1,5 +1,10 @@
 # QRV Link
 
+<p align="center">
+  <img src="images/qrv-link-icon.png" alt="QRV Link icon: a dark adapter with a blue D750 label and the Bluetooth symbol" width="128" height="128">
+</p>
+<p align="center"><strong>Bluetooth packet and APRS for your TM-D750</strong></p>
+
 [![Build firmware](https://github.com/jonnyborbs/qrv-link/actions/workflows/build.yml/badge.svg)](https://github.com/jonnyborbs/qrv-link/actions/workflows/build.yml)
 [![Latest release](https://img.shields.io/github/v/release/jonnyborbs/qrv-link?label=release)](https://github.com/jonnyborbs/qrv-link/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/jonnyborbs/qrv-link/total)](https://github.com/jonnyborbs/qrv-link/releases)

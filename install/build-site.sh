@@ -22,6 +22,7 @@ here="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$out/firmware"
 cp "$here/index.html" "$out/index.html"
 cp "$here/case.png" "$out/case.png"
+cp "$here/icon.png" "$out/icon.png"
 touch "$out/.nojekyll"
 
 # One "version file" line per image, newest first.
