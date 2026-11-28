@@ -33,6 +33,8 @@ The reason the much loved B.B. Link will not work for the TM-D750 is because thi
 
 ## Getting Started
 
+> **Don't want to build one?** If you'd like to purchase a pre-built QRV Link adapter, please email me at [qso@kb0rb.net](mailto:qso@kb0rb.net). I don't want to make a business out of it, but I would build a few at cost for those who don't want to DIY.
+
 ### Buy a board
 - Development was done on the **AITRIP ESP32-S3-DevKitC-1-N16R8** (16 MB flash, 8 MB octal PSRAM),
   available [on Amazon](https://link.amazon/B066pf0Qa). Be sure you get this variant of the board - there is another that has different component orientations and the case will not fit it. The functionality of that other variant is not tested and it may have a different GPIO pinout for the neopixel.
